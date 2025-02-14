@@ -121,4 +121,4 @@ Werkzeug==2.3.7
 wsproto==1.2.0
 zhconv==1.4.3
 httpx[socks]==0.27.2
-
+bencodepy==4.0.0
