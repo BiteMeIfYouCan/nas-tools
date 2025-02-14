@@ -7,6 +7,8 @@ from app.downloader.client._base import _IDownloadClient
 from app.utils.types import DownloaderType
 from config import Config
 
+from httpx import AsyncHTTPTransport
+
 
 class PikPak(_IDownloadClient):
     
@@ -29,17 +31,29 @@ class PikPak(_IDownloadClient):
 
 
     def init_config(self):
+        # 采用最新的api传递代理参数
         if self._client_config:
             self.username = self._client_config.get("username")
             self.password = self._client_config.get("password")
             self.proxy = self._client_config.get("proxy")
 
+            httpx_client_args = {
+                "transport": httpx.AsyncHTTPTransport(retries=3)
+            }
+
+            # 检查代理配置是否存在，并正确格式化
+            if self.proxy:
+                if not (self.proxy.startswith("http://") or self.proxy.startswith("https://") or self.proxy.startswith("socks5://")):
+                    # 如果代理不是以http://、https://或socks5://开始，则默认为HTTP代理
+                    self.proxy = "http://" + self.proxy
+                httpx_client_args["proxies"] = self.proxy
+
             if self.username and self.password:
                 self._client = PikPakApi(
-                username=self.username,
-                password=self.password,
-                proxy=self.proxy,
-            )
+                    username=self.username,
+                    password=self.password,
+                    httpx_client_args=httpx_client_args
+                )
 
     @classmethod
     def match(cls, ctype):
